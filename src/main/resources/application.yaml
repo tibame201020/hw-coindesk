@@ -1,0 +1,24 @@
+spring:
+  application:
+    name: coin-desk api
+  jpa:
+    generate-ddl: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: update
+  datasource:
+    username: user
+    password: pwd
+    driverClassName: org.h2.Driver
+    platform: h2
+
+server:
+  port: 8099
+
+logging:
+  level:
+    org:
+      hibernate:
+        SQL: debug
