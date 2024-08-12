@@ -19,6 +19,14 @@ server:
 
 logging:
   level:
-    org:
-      hibernate:
-        SQL: debug
+    org:hibernate:SQL: DEBUG
+    custom:tibame201020:coindesk: DEBUG
+
+
+feign:
+  httpclient:
+    enabled: true
+    max-connections: 200
+    max-connections-per-route: 50
+    connection-timeout: 5000
+    socket-timeout: 10000

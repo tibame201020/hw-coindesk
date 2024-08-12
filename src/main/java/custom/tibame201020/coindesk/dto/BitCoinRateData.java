@@ -7,7 +7,7 @@ import java.io.Serializable;
 import java.util.Map;
 
 @Data
-public class BitcoinRateData implements Serializable {
+public class BitCoinRateData implements Serializable {
     private Time time;
     private String disclaimer;
     private String chartName;
