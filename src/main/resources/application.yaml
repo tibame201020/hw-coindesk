@@ -30,3 +30,7 @@ feign:
     max-connections-per-route: 50
     connection-timeout: 5000
     socket-timeout: 10000
+
+springdoc:
+  swagger-ui:
+    path: /api-docs
