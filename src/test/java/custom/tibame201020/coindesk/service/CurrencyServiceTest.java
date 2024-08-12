@@ -2,6 +2,7 @@ package custom.tibame201020.coindesk.service;
 
 import custom.tibame201020.coindesk.BasicMockitoExtensionTest;
 import custom.tibame201020.coindesk.domain.Currency;
+import custom.tibame201020.coindesk.dto.BitCoinRateData;
 import custom.tibame201020.coindesk.repo.CurrencyRepo;
 import custom.tibame201020.coindesk.service.impl.CurrencyServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
@@ -11,13 +12,15 @@ import org.mockito.Mock;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -29,10 +32,26 @@ class CurrencyServiceTest implements BasicMockitoExtensionTest {
     private CurrencyRepo currencyRepo;
 
     private Currency currency;
+    private BitCoinRateData testBitCoinRateData;
 
     @BeforeEach
     void init() {
         currency = Currency.builder().build();
+
+
+        BitCoinRateData.Time time = new BitCoinRateData.Time();
+        time.setUpdatedISO("2024-08-12T01:10:22+00:00");
+
+        BitCoinRateData.CurrencyInfo usdData = new BitCoinRateData.CurrencyInfo();
+        usdData.setCode("USD");
+        usdData.setRateFloat(50000f);
+        usdData.setDescription("United States Dollar");
+
+        testBitCoinRateData = new BitCoinRateData();
+        testBitCoinRateData.setTime(time);
+        Map<String, BitCoinRateData.CurrencyInfo> bpiMap = new HashMap<>();
+        bpiMap.put("USD", usdData);
+        testBitCoinRateData.setBpi(bpiMap);
     }
 
     @Test
@@ -121,5 +140,25 @@ class CurrencyServiceTest implements BasicMockitoExtensionTest {
         when(currencyRepo.findById("ETH")).thenReturn(Optional.empty());
 
         assertThrows(RuntimeException.class, () -> currencyService.deleteCurrency("ETH"));
+    }
+
+    @Test
+    void convertBigCoinRateData_Success() {
+        when(currencyRepo.findById("USD")).thenReturn(Optional.empty());
+        when(currencyRepo.save(any(Currency.class))).thenReturn(currency);
+
+        List<Currency> result = currencyService.convertBigCoinRateData(testBitCoinRateData);
+
+        assertFalse(result.isEmpty());
+        assertEquals(1, result.size());
+        assertEquals(currency, result.get(0));
+        verify(currencyRepo).save(any(Currency.class));
+    }
+
+    @Test
+    void convertBigCoinRateData_NullInput() {
+        List<Currency> result = currencyService.convertBigCoinRateData(null);
+
+        assertTrue(result.isEmpty());
     }
 }

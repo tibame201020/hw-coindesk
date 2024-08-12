@@ -1,6 +1,8 @@
 package custom.tibame201020.coindesk.service.impl;
 
 import custom.tibame201020.coindesk.domain.Currency;
+import custom.tibame201020.coindesk.dto.BitCoinRateData;
+import custom.tibame201020.coindesk.dto.CurrencyDTO;
 import custom.tibame201020.coindesk.repo.CurrencyRepo;
 import custom.tibame201020.coindesk.service.CurrencyService;
 import lombok.RequiredArgsConstructor;
@@ -9,9 +11,11 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -72,4 +76,37 @@ public class CurrencyServiceImpl implements CurrencyService {
         Currency currency = getCurrency(coinCategory);
         currencyRepo.delete(currency);
     }
+
+    @Override
+    public List<Currency> convertBigCoinRateData(BitCoinRateData bitCoinRateData) {
+        if (Objects.isNull(bitCoinRateData) || Objects.isNull(bitCoinRateData.getBpi())) {
+            return Collections.emptyList();
+        }
+
+        Instant apiUpdateTime = parseISODate(bitCoinRateData.getTime().getUpdatedISO());
+        Instant now = Instant.now();
+
+        return bitCoinRateData.getBpi().entrySet().stream()
+                .map(entry -> {
+                    String code = entry.getKey();
+                    BitCoinRateData.CurrencyInfo currencyInfo = entry.getValue();
+
+                    Currency currency = currencyRepo.findById(code).orElse(new Currency());
+
+                    currency.setCoinCategory(code);
+                    currency.setCoinDescription(Optional.ofNullable(currency.getCoinDescription()).orElse(currencyInfo.getDescription()));
+                    currency.setRate(BigDecimal.valueOf(currencyInfo.getRateFloat()));
+                    currency.setApiUpdateTime(apiUpdateTime);
+
+                    if (Objects.isNull(currency.getCreateTime())) {
+                        currency.setCreateTime(now);
+                    }
+                    currency.setUpdateTime(now);
+
+                    return currencyRepo.save(currency);
+
+                })
+                .collect(Collectors.toList());
+    }
+
 }
